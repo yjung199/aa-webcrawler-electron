@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>I'm a hidden worker</title>
+  </head>
+
+  <body>
+    <script>
+      const { ipcRenderer } = require("electron");
+      let message2UI = (command, payload) => {
+        ipcRenderer.send("message-from-worker", {
+          command: command,
+          payload: payload,
+        });
+      };
+      message2UI("helloWorld", {
+        myParam: 1337,
+        anotherParam: 42,
+      });
+    </script>
+  </body>
+</html>

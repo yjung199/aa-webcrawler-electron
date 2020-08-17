@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hello World!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css" />
+    <link rel="stylesheet" href="index.css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <script defer src="renderer.js"></script>
+  </head>
+  <body>
+    <h1 id="title" class="title">💖 Hello World!</h1>
+    <p>Welcome to your Electron application.</p>
+    <div class="field">
+      <label class="label is-size-5">Search Query</label>
+      <div class="control has-icons-left">
+        <input
+          id="searchbar"
+          class="input is-rounded"
+          type="text"
+          placeholder="e.g Chiropractor in St Louis MO"
+        />
+        <span class="icon is-small is-left">
+          <i class="fas fa-search"></i>
+        </span>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="control has-text-centered">
+        <label class="checkbox">
+          <input type="checkbox" />
+          Include email in results
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="control has-text-centered">
+        <button id="search" class="button is-primary is-outlined">
+          Search
+        </button>
+      </div>
+    </div>
+
+    <div id="info" class="level is-mobile is-invisible">
+      <div class="level-left">
+        <div class="level-item">
+          <small id="count">First column</small>
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <button id="csv" class="button is-outlined" title="Save as CSV">
+            <span id="save" class="icon">
+              <i class="far fa-arrow-alt-circle-down"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="container"></div>
+
+    <script>
+      // GOOGLE PLACES API KEY
+      var gKey = 'AIzaSyCUc-_Qkb27tR8r6l9nkiDDP16yGbYUk2c';
+    </script>
+  </body>
+</html>

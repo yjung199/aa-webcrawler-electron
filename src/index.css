@@ -1,0 +1,18 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: auto;
+  max-width: 42rem;
+  padding: 2rem;
+}
+.is-horizontal-center {
+  justify-content: center;
+}
+.has-image-centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+.image img {
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
