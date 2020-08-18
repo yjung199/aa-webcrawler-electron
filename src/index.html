@@ -61,7 +61,19 @@
       </div>
     </div>
 
-    <div id="results" class="container"></div>
+    <div>
+      <div id="results" class="container mb-6"></div>
+      <nav
+        id="pagenav"
+        class="pagination is-rounded is-centered is-invisible"
+        role="navigation"
+        aria-label="pagination"
+      >
+        <a id="pageprev" class="pagination-previous" disabled>Previous</a>
+        <a id="pagenext" class="pagination-next">Next</a>
+        <ul id="pagelist" class="pagination-list"></ul>
+      </nav>
+    </div>
 
     <script>
       // GOOGLE PLACES API KEY

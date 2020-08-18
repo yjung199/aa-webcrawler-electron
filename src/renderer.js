@@ -2,7 +2,7 @@
 // 60 results display - done
 // fix image - done
 // cut down website - done
-// Pagination
+// Pagination - done
 // Save to CSV - done
 // Link in Google Map - done
 
@@ -14,10 +14,12 @@ const { stringify } = require('querystring');
 const title = document.getElementById('title');
 const results = document.getElementById('results');
 const icon = document.getElementById('save');
+
 title.innerText = titleHour(hour);
 
 let nextToken = '';
 let data = [];
+let pagination = [];
 
 function titleHour(hour) {
   switch (true) {
@@ -43,22 +45,51 @@ const searchBtn = document.getElementById('search');
 const count = document.getElementById('count');
 const info = document.getElementById('info');
 const csvBtn = document.getElementById('csv');
+const pagenav = document.getElementById('pagenav');
+
 // info.style.visibility = 'hidden';
 searchBar.addEventListener('keyup', (event) => {
   if (event.key === 'Enter') {
     searchBtn.classList.add('is-loading');
     nextToken = '';
     data = [];
+    pagination = [];
     info.classList.add('is-invisible');
+    pagenav.classList.add('is-invisible');
     icon.innerHTML = '<i class="far fa-arrow-alt-circle-down"></i>';
     csvBtn.title = 'Save as CSV';
     removeAllChildNodes(results);
     searchLoop()
       .then((list) => {
         Promise.all(list).then((values) => {
-          boxLoop(results, values);
+          const pages = chunk(values, 10);
+          for (page of pages) {
+            // let boxes = [];
+            // for (detail of page) {
+            //   boxes.push(fillBox(detail));
+            // }
+            // const div = document.createElement('div');
+            // for (b of boxes) {
+            //   div.appendChild(b);
+            // }
+            const div = document.createElement('div');
+            for (detail of page) {
+              div.appendChild(fillBox(detail));
+            }
+            pagination.push(div);
+            console.log(pagination);
+            // Display initial page
+            if (pagination.length == 1) {
+              results.appendChild(pagination[0]);
+            }
+          }
+          console.log(pagination);
+          pageNavSetup(pagination.length);
           console.log(values);
           info.classList.remove('is-invisible');
+          if (pagination.length > 0) {
+            pagenav.classList.remove('is-invisible');
+          }
           count.innerText = `${values.length} results found`;
         });
       })
@@ -194,7 +225,7 @@ async function boxLoop(target, placeDetails) {
     fillBox(target, d);
   }
 }
-function fillBox(t, placeDetail) {
+function fillBox(placeDetail) {
   let box = document.createElement('div');
   box.className = 'box';
   let article = document.createElement('article');
@@ -249,7 +280,8 @@ function fillBox(t, placeDetail) {
   article.appendChild(mediaLeft);
   article.appendChild(mediaContent);
   box.appendChild(article);
-  t.appendChild(box);
+  return box;
+  // t.appendChild(box);
 }
 
 /* Credit:
@@ -350,7 +382,7 @@ function toCSV(query) {
         const ws = fs.createWriteStream(r.filePath);
         fastcsv.write(data, { headers: true }).pipe(ws);
         icon.innerHTML = '<i class="fas fa-chevron-circle-down"></i>';
-        csvBtn.title = 'Saved';
+        csvBtn.title = 'Saved!';
       } else {
         console.log('Save canceled by user');
       }
@@ -360,10 +392,98 @@ function toCSV(query) {
     });
 }
 
-// Open all links in external browser
+// Document-wise click event listener
 document.addEventListener('click', function (event) {
+  // Open all links in external browser
   if (event.target.tagName === 'A' && event.target.href.startsWith('http')) {
     event.preventDefault();
     shell.openExternal(event.target.href);
   }
+
+  // Pagination Control
+  if (event.target.tagName === 'A' && event.target.parentNode.id.startsWith('page')) {
+    console.log(event.target.innerText);
+    if (!event.target.hasAttribute('disabled')) {
+      pageNavController(event.target);
+    }
+  }
 });
+/* Credit:
+ * Dave Furfero (furf)
+ * https://stackoverflow.com/a/11764168
+ */
+function chunk(arr, len) {
+  var chunks = [],
+    i = 0,
+    n = arr.length;
+
+  while (i < n) {
+    chunks.push(arr.slice(i, (i += len)));
+  }
+  return chunks;
+}
+
+const pageList = document.getElementById('pagelist');
+function pageNavSetup(pageNum) {
+  // Empty out list
+  pageList.querySelectorAll('*').forEach((n) => n.remove());
+  // Setting up Nav
+  var i;
+  for (i = 1; i <= pageNum; i++) {
+    let li = document.createElement('li');
+    li.id = `page${i}`;
+    let a = document.createElement('a');
+    a.classList.add('pagination-link');
+    if (i == 1) {
+      a.classList.add('is-current');
+      a.setAttribute('aria-label', `Page ${i}`);
+      a.setAttribute('aria-current', 'page');
+    }
+    a.setAttribute('aria-label', `Goto page ${i}`);
+
+    a.innerText = `${i}`;
+    li.appendChild(a);
+    appendElements(li, a);
+    pageList.appendChild(li);
+  }
+}
+
+function pageNavController(t) {
+  // is-current control and find out currentPage
+  let currentPage;
+  for (child of pageList.childNodes) {
+    console.log(child);
+    if (child.firstChild.classList.contains('is-current')) {
+      currentPage = child.firstChild.innerText;
+    }
+    child.firstChild.classList.remove('is-current');
+  }
+
+  let pageNumber;
+  if (t.innerText == 'Previous') {
+    pageNumber = currentPage - 1;
+  } else if (t.innerText == 'Next') {
+    pageNumber = 1 + +currentPage;
+  } else {
+    pageNumber = t.innerText;
+  }
+  console.log(currentPage);
+  console.log(pageNumber);
+  const x = document.getElementById(`page${pageNumber}`);
+  x.firstChild.classList.add('is-current');
+  // t.classList.add('is-current');
+
+  const pagePrev = document.getElementById('pageprev');
+  const pageNext = document.getElementById('pagenext');
+  results.firstChild.replaceWith(pagination[pageNumber - 1]);
+  if (pageNumber == 1) {
+    pagePrev.setAttribute('disabled', true);
+    pageNext.removeAttribute('disabled');
+  } else if (pageNumber > 1 && pageNumber < pagination.length) {
+    pagePrev.removeAttribute('disabled');
+    pageNext.removeAttribute('disabled');
+  } else {
+    pagePrev.removeAttribute('disabled');
+    pageNext.setAttribute('disabled', true);
+  }
+}
