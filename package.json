@@ -56,11 +56,11 @@
           "config": {
             "repository": {
               "owner": "yjung199",
-              "name": "aa-webcrawler-electron"
+              "name": "aa-scraper-electron-release"
             },
             "prerelease": true,
             "draft": false,
-            "authToken": "c57eceeb1cb358d5836e6567443eb9d2b91586b1"
+            "authToken": "eefed15e2ba1e86f6a78f513126c3bc9a365b453"
           }
         }
       ]
