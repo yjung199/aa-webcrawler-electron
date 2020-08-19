@@ -1,15 +1,16 @@
 {
   "name": "aa-webcrawler",
-  "productName": "aa-webcrawler",
-  "version": "1.0.0",
-  "description": "My Electron application description",
+  "productName": "Places Scraper",
+  "version": "0.9.0",
+  "description": "Business information scraper using Google Places.",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "publish": "electron-forge publish --auth-token=b94c841e1353e257912b3f42b2e9149123cb1b32",
+    "lint": "echo \"No linting configured\"",
+    "build": "electron-builder build"
   },
   "keywords": [],
   "author": {
@@ -41,12 +42,28 @@
           "name": "@electron-forge/maker-rpm",
           "config": {}
         }
+      ],
+      "publishers": [
+        {
+          "name": "@electron-forge/publisher-github",
+          "config": {
+            "repository": {
+              "owner": "yjung199",
+              "name": "aa-webcrawler-electron"
+            },
+            "prerelease": true
+          },
+          "authToken": "b94c841e1353e257912b3f42b2e9149123cb1b32"
+        }
       ]
     }
   },
   "dependencies": {
+    "@electron-forge/maker-dmg": "^6.0.0-beta.52",
+    "@electron-forge/publisher-github": "^6.0.0-beta.52",
     "@googlemaps/google-maps-services-js": "^3.1.6",
     "croppie": "^2.6.5",
+    "electron-builder": "^22.8.0",
     "electron-squirrel-startup": "^1.0.0",
     "fast-csv": "^4.3.1"
   },
