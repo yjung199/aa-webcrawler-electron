@@ -6,6 +6,8 @@
 // Save to CSV - done
 // Link in Google Map - done
 // Connection check - done
+// Reduce results to 40
+// Remove pictures
 
 const { ipcRenderer, shell, remote } = require('electron');
 const hour = new Date().getHours();
