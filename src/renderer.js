@@ -5,6 +5,7 @@
 // Pagination - done
 // Save to CSV - done
 // Link in Google Map - done
+// Connection check - done
 
 const { ipcRenderer, shell, remote } = require('electron');
 const hour = new Date().getHours();
@@ -46,65 +47,141 @@ const count = document.getElementById('count');
 const info = document.getElementById('info');
 const csvBtn = document.getElementById('csv');
 const pagenav = document.getElementById('pagenav');
+const connection = document.getElementById('connection');
+let online;
+ipcRenderer.on('online-status-changed', (e, d) => {
+  if (d == 'offline') {
+    online = false;
+    connection.classList.remove('is-hidden');
+    searchBtn.setAttribute('disabled', true);
+    results.classList.add('is-hidden');
+    pagenav.classList.add('is-hidden');
+  } else {
+    online = true;
+    connection.classList.add('is-hidden');
+    searchBtn.removeAttribute('disabled');
+    results.classList.remove('is-hidden');
+    pagenav.classList.remove('is-hidden');
+  }
+  console.log(online); // offline online
+});
 
-// info.style.visibility = 'hidden';
-searchBar.addEventListener('keyup', (event) => {
-  if (event.key === 'Enter') {
-    searchBtn.classList.add('is-loading');
-    nextToken = '';
-    data = [];
-    pagination = [];
-    info.classList.add('is-invisible');
-    pagenav.classList.add('is-invisible');
-    icon.innerHTML = '<i class="far fa-arrow-alt-circle-down"></i>';
-    csvBtn.title = 'Save as CSV';
-    removeAllChildNodes(results);
-    searchLoop()
-      .then((list) => {
-        Promise.all(list).then((values) => {
-          const pages = chunk(values, 10);
-          for (page of pages) {
-            // let boxes = [];
-            // for (detail of page) {
-            //   boxes.push(fillBox(detail));
-            // }
-            // const div = document.createElement('div');
-            // for (b of boxes) {
-            //   div.appendChild(b);
-            // }
-            const div = document.createElement('div');
-            for (detail of page) {
-              div.appendChild(fillBox(detail));
-            }
-            pagination.push(div);
-            console.log(pagination);
-            // Display initial page
-            if (pagination.length == 1) {
-              results.appendChild(pagination[0]);
-            }
+function initializeSearch() {
+  searchBtn.classList.add('is-loading');
+  nextToken = '';
+  data = [];
+  pagination = [];
+  info.classList.add('is-invisible');
+  pagenav.classList.add('is-invisible');
+  icon.innerHTML = '<i class="far fa-arrow-alt-circle-down"></i>';
+  csvBtn.title = 'Save as CSV';
+  removeAllChildNodes(results);
+  searchLoop()
+    .then((list) => {
+      Promise.all(list).then((values) => {
+        const pages = chunk(values, 10);
+        for (page of pages) {
+          // let boxes = [];
+          // for (detail of page) {
+          //   boxes.push(fillBox(detail));
+          // }
+          // const div = document.createElement('div');
+          // for (b of boxes) {
+          //   div.appendChild(b);
+          // }
+          const div = document.createElement('div');
+          for (detail of page) {
+            div.appendChild(fillBox(detail));
           }
+          pagination.push(div);
           console.log(pagination);
-          pageNavSetup(pagination.length);
-          console.log(values);
-          info.classList.remove('is-invisible');
-          if (pagination.length > 0) {
-            pagenav.classList.remove('is-invisible');
+          // Display initial page
+          if (pagination.length == 1) {
+            results.appendChild(pagination[0]);
           }
-          count.innerText = `${values.length} results found`;
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-      .finally(() => {
-        searchBtn.classList.remove('is-loading');
+        }
+        console.log(pagination);
+        pageNavSetup(pagination.length);
+        console.log(values);
+        info.classList.remove('is-invisible');
+        if (pagination.length > 0) {
+          pagenav.classList.remove('is-invisible');
+        }
+        count.innerText = `${values.length} results found`;
       });
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+    .finally(() => {
+      searchBtn.classList.remove('is-loading');
+      let autoCSV = document.getElementById('autocsv');
+      if (autoCSV.checked) {
+        toCSV(searchBar.value);
+      }
+    });
+}
+searchBar.addEventListener('keyup', (event) => {
+  if (event.key === 'Enter' && online) {
+    initializeSearch();
+    // searchBtn.classList.add('is-loading');
+    // nextToken = '';
+    // data = [];
+    // pagination = [];
+    // info.classList.add('is-invisible');
+    // pagenav.classList.add('is-invisible');
+    // icon.innerHTML = '<i class="far fa-arrow-alt-circle-down"></i>';
+    // csvBtn.title = 'Save as CSV';
+    // removeAllChildNodes(results);
+    // searchLoop()
+    //   .then((list) => {
+    //     Promise.all(list).then((values) => {
+    //       const pages = chunk(values, 10);
+    //       for (page of pages) {
+    //         // let boxes = [];
+    //         // for (detail of page) {
+    //         //   boxes.push(fillBox(detail));
+    //         // }
+    //         // const div = document.createElement('div');
+    //         // for (b of boxes) {
+    //         //   div.appendChild(b);
+    //         // }
+    //         const div = document.createElement('div');
+    //         for (detail of page) {
+    //           div.appendChild(fillBox(detail));
+    //         }
+    //         pagination.push(div);
+    //         console.log(pagination);
+    //         // Display initial page
+    //         if (pagination.length == 1) {
+    //           results.appendChild(pagination[0]);
+    //         }
+    //       }
+    //       console.log(pagination);
+    //       pageNavSetup(pagination.length);
+    //       console.log(values);
+    //       info.classList.remove('is-invisible');
+    //       if (pagination.length > 0) {
+    //         pagenav.classList.remove('is-invisible');
+    //       }
+    //       count.innerText = `${values.length} results found`;
+    //     });
+    //   })
+    //   .catch((error) => {
+    //     console.log(error);
+    //   })
+    //   .finally(() => {
+    //     searchBtn.classList.remove('is-loading');
+    //     let autoCSV = document.getElementById('autocsv');
+    //     if (autoCSV.checked) {
+    //       toCSV(searchBar.value);
+    //     }
+    //   });
   }
 });
 searchBtn.addEventListener('click', (event) => {
-  if (event.key === 'Enter') {
-    searchBtn.classList.add('is-loading');
-  }
+  console.log('hello');
+  initializeSearch();
 });
 
 csvBtn.style.setProperty('color', 'inherit', 'important');
@@ -135,7 +212,6 @@ async function searchLoop() {
           console.log('key doesnt exist');
         }
         for (p of data.results) {
-          // list.push(p);
           const placeDetail = searchDetail(p.place_id);
           list2.push(placeDetail);
         }

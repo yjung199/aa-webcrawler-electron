@@ -8,9 +8,10 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+let mainWindow;
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 800,
     webPreferences: {
@@ -23,26 +24,12 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
-
-  // create hidden worker window
-  const workerWindow = new BrowserWindow({
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-
-  workerWindow.loadFile(path.join(__dirname, 'worker.html'));
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow, async () => {
-  ipcMain.on('message-from-worker', (event, arg) => {
-    sendWindowMessage(mainWindow, 'message-from-worker', arg);
-  });
-});
+app.on('ready', createWindow, async () => {});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -71,6 +58,7 @@ function sendWindowMessage(targetWindow, message, payload) {
   targetWindow.webContents.send(message, payload);
 }
 
+// Send online status to renderer.js
 let onlineStatusWindow;
 
 app.whenReady().then(() => {
@@ -83,6 +71,12 @@ app.whenReady().then(() => {
   onlineStatusWindow.loadURL(`file://${__dirname}/online-status.html`);
 });
 
-ipcMain.on('online-status-changed', (event, status) => {
+ipcMain.on('online-status-changed', function (event, status) {
   console.log(status);
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('online-status-changed', status);
+    console.log('sent');
+  });
+  mainWindow.webContents.send('online-status-changed', status);
+  console.log('sent');
 });

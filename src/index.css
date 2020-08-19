@@ -16,3 +16,23 @@ body {
   object-fit: cover;
   border-radius: 6px;
 }
+
+.columns.is-vcentered {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.connection {
+  display: inline-flex;
+  align-items: center;
+  height: 2em;
+}
+
+.connection strong {
+  font-size: 2em;
+  padding-left: 0.3em;
+}
+.connection div {
+  display: block;
+}
