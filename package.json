@@ -1,7 +1,7 @@
 {
   "name": "aa-webcrawler",
   "productName": "Places Scraper",
-  "version": "0.9.2",
+  "version": "0.9.6",
   "description": "Business information scraper using Google Places.",
   "main": "src/index.js",
   "scripts": {
@@ -60,7 +60,7 @@
             },
             "prerelease": true,
             "draft": false,
-            "authToken": "eefed15e2ba1e86f6a78f513126c3bc9a365b453"
+            "authToken": "1d0e35790d3cdb3c36464d3b50592a90f6384515"
           }
         }
       ]
@@ -73,6 +73,7 @@
     "croppie": "^2.6.5",
     "electron-builder": "^22.8.0",
     "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^6.0.0",
     "fast-csv": "^4.3.1"
   },
   "devDependencies": {

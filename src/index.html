@@ -25,6 +25,7 @@
           <i class="fas fa-search"></i>
         </span>
       </div>
+      <p id="invalid-input" class="help is-danger is-hidden">This input is invalid</p>
     </div>
 
     <div class="field">
@@ -44,6 +45,26 @@
       </div>
     </div>
 
+    <div class="notification is-warning is-light is-hidden" id="noti">
+      <button class="delete" id="noticls"></button>
+      <strong>☝️ Just a second!</strong>
+      <p>
+        This application uses Google Places API. High traffic and SKU consumption can lead to
+        unexpected expenses. As a prevention, the application limits the search count to 300 per
+        user per day.
+      </p>
+      <p id="notictr">
+        <em>So far, you've searched 0 place(s) today.</em>
+      </p>
+    </div>
+
+    <div class="notification is-danger is-hidden" id="notid">
+      <strong>😓 That's it for today...</strong>
+      <p>
+        It seems that you have exceeded the daily search limit. Please come back tomorrow!
+      </p>
+    </div>
+
     <div id="info" class="level is-mobile is-invisible">
       <div class="level-left">
         <div class="level-item">
@@ -58,6 +79,23 @@
             </span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div id="dailySearchExceedModal" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Modal title</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+          spdfjspofsdofspod
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-success">Save changes</button>
+          <button class="button">Cancel</button>
+        </footer>
       </div>
     </div>
 
@@ -102,7 +140,7 @@
 
     <script>
       // GOOGLE PLACES API KEY
-      var gKey = 'AIzaSyCUc-_Qkb27tR8r6l9nkiDDP16yGbYUk2c';
+      var gKey = 'AIzaSyBwsoThzB0qL5rCVb8SGYOgJJHnYJDFIqc';
     </script>
   </body>
 </html>

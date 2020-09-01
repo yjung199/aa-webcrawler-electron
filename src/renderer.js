@@ -6,19 +6,36 @@
 // Save to CSV - done
 // Link in Google Map - done
 // Connection check - done
-// Reduce results to 40
-// Remove pictures
+// Remove pictures - done
+// Limit daily search count to 300 - done
 
-const { ipcRenderer, shell, remote } = require('electron');
-const hour = new Date().getHours();
+const { ipcRenderer, shell, remote, dialog } = require('electron');
+const Store = require('electron-store');
+const date = new Date();
+const hour = date.getHours();
 const fastcsv = require('fast-csv');
 const fs = require('fs');
 const { stringify } = require('querystring');
 const title = document.getElementById('title');
 const results = document.getElementById('results');
 const icon = document.getElementById('save');
+let dailyLimit = 5;
 
 title.innerText = titleHour(hour);
+const schema = {
+  lastUpdateDate: {
+    type: 'number',
+    maximum: 31,
+    minimum: 1,
+    default: 1,
+  },
+  dailySearched: {
+    type: 'number',
+    default: 0,
+  },
+};
+
+const store = new Store({ schema });
 
 let nextToken = '';
 let data = [];
@@ -43,6 +60,19 @@ function titleHour(hour) {
   }
 }
 
+(function () {
+  const dateInCache = store.get('lastUpdateDate');
+  console.log(date.getDate());
+  console.log(dateInCache);
+  if (dateInCache < date.getDate()) {
+    store.set('dailySearched', 0);
+  }
+})();
+
+const notiCtr = document.getElementById('notictr');
+notiCtr.innerHTML = `<em>So far, you\'ve searched 
+${store.get('dailySearched')} place(s) today.</em>`;
+
 const searchBar = document.getElementById('searchbar');
 const searchBtn = document.getElementById('search');
 const count = document.getElementById('count');
@@ -50,6 +80,9 @@ const info = document.getElementById('info');
 const csvBtn = document.getElementById('csv');
 const pagenav = document.getElementById('pagenav');
 const connection = document.getElementById('connection');
+const notiD = document.getElementById('notid');
+const noti = document.getElementById('noti');
+
 let online;
 ipcRenderer.on('online-status-changed', (e, d) => {
   if (d == 'offline') {
@@ -60,19 +93,52 @@ ipcRenderer.on('online-status-changed', (e, d) => {
     pagenav.classList.add('is-hidden');
   } else {
     online = true;
+
     connection.classList.add('is-hidden');
     searchBtn.removeAttribute('disabled');
     results.classList.remove('is-hidden');
     pagenav.classList.remove('is-hidden');
   }
   console.log(online); // offline online
+  limitCheck();
 });
+
+function limitCheck() {
+  if (store.get('dailySearched') >= dailyLimit) {
+    console.log('f');
+    notiD.animate(
+      [
+        // keyframes
+        { transform: 'translateY(0%)' },
+        { transform: 'translateY(-5%)' },
+        { transform: 'translateY(2%)' },
+        { transform: 'translateY(-3%)' },
+        { transform: 'translateY(1%)' },
+        { transform: 'translateY(0%)' },
+      ],
+      {
+        // timing options
+        duration: 500,
+        easing: 'ease',
+      }
+    );
+    notiD.classList.remove('is-hidden');
+    noti.classList.add('is-hidden');
+    searchBar.setAttribute('disabled', true);
+    searchBtn.setAttribute('disabled', true);
+  } else {
+    noti.classList.remove('is-hidden');
+  }
+}
+
+let basics = [];
 
 function initializeSearch() {
   searchBtn.classList.add('is-loading');
   nextToken = '';
   data = [];
   pagination = [];
+  basics = [];
   info.classList.add('is-invisible');
   pagenav.classList.add('is-invisible');
   icon.innerHTML = '<i class="far fa-arrow-alt-circle-down"></i>';
@@ -92,8 +158,12 @@ function initializeSearch() {
           //   div.appendChild(b);
           // }
           const div = document.createElement('div');
+          var i = 0;
           for (detail of page) {
-            div.appendChild(fillBox(detail));
+            const name = basics[i].name;
+            const rating = basics[i].rating;
+            div.appendChild(fillBox(name, rating, detail));
+            i = i + 1;
           }
           pagination.push(div);
           console.log(pagination);
@@ -110,6 +180,8 @@ function initializeSearch() {
           pagenav.classList.remove('is-invisible');
         }
         count.innerText = `${values.length} results found`;
+
+        updateCache(parseInt(values.length));
       });
     })
     .catch((error) => {
@@ -117,6 +189,7 @@ function initializeSearch() {
     })
     .finally(() => {
       searchBtn.classList.remove('is-loading');
+      limitCheck();
       let autoCSV = document.getElementById('autocsv');
       if (autoCSV.checked) {
         toCSV(searchBar.value);
@@ -125,7 +198,14 @@ function initializeSearch() {
 }
 searchBar.addEventListener('keyup', (event) => {
   if (event.key === 'Enter' && online) {
-    initializeSearch();
+    if (searchBar.value) {
+      closeWarningNoti();
+      initializeSearch();
+    } else {
+      searchBar.classList.add('is-danger');
+      const el = document.getElementById('invalid-input');
+      el.classList.remove('is-hidden');
+    }
     // searchBtn.classList.add('is-loading');
     // nextToken = '';
     // data = [];
@@ -183,7 +263,16 @@ searchBar.addEventListener('keyup', (event) => {
 });
 searchBtn.addEventListener('click', (event) => {
   console.log('hello');
-  initializeSearch();
+  if (online) {
+    if (searchBar.value) {
+      closeWarningNoti();
+      initializeSearch();
+    } else {
+      searchBar.classList.add('is-danger');
+      const el = document.getElementById('invalid-input');
+      el.classList.remove('is-hidden');
+    }
+  }
 });
 
 csvBtn.style.setProperty('color', 'inherit', 'important');
@@ -199,7 +288,6 @@ const detailBaseUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
  * https://stackoverflow.com/a/44476626
  */
 async function searchLoop() {
-  const list = [];
   const list2 = [];
   for (let i = 0; i < 3; i++) {
     if (i > 0 && !nextToken) {
@@ -214,6 +302,7 @@ async function searchLoop() {
           console.log('key doesnt exist');
         }
         for (p of data.results) {
+          basics.push({ name: p.name, rating: p.rating });
           const placeDetail = searchDetail(p.place_id);
           list2.push(placeDetail);
         }
@@ -258,8 +347,7 @@ async function searchDetail(placeId) {
   const param = {
     key: gKey,
     place_id: placeId,
-    fields:
-      'name,formatted_address,business_status,formatted_phone_number,website,photo,international_phone_number,url',
+    fields: 'formatted_address,formatted_phone_number,website,url',
   };
   const url = `${detailBaseUrl}?${dictToURI(param)}`;
   console.log(url);
@@ -303,22 +391,22 @@ async function boxLoop(target, placeDetails) {
     fillBox(target, d);
   }
 }
-function fillBox(placeDetail) {
+function fillBox(placeName, rating, placeDetail) {
   let box = document.createElement('div');
   box.className = 'box';
   let article = document.createElement('article');
   article.className = 'media';
-  let mediaLeft = document.createElement('div');
-  mediaLeft.className = 'media-left';
-  let figure = document.createElement('figure');
-  figure.className = 'image is-128x128';
-  let img = document.createElement('img');
-  const imgBaseUrl = 'https://maps.googleapis.com/maps/api/place/photo';
-  let photoRef = '';
-  if ('photos' in placeDetail.result) {
-    photoRef = placeDetail.result.photos[0].photo_reference;
-  }
-  const name = placeDetail.result.name;
+  let innerDiv = document.createElement('div');
+  // mediaLeft.className = 'media-left';
+  // let figure = document.createElement('figure');
+  // figure.className = 'image is-128x128';
+  // let img = document.createElement('img');
+  // const imgBaseUrl = 'https://maps.googleapis.com/maps/api/place/photo';
+  // let photoRef = '';
+  // if ('photos' in placeDetail.result) {
+  //   photoRef = placeDetail.result.photos[0].photo_reference;
+  // }
+  const name = placeName;
   const addr = placeDetail.result.formatted_address;
   const phone = placeDetail.result.formatted_phone_number;
   let websiteFull = '';
@@ -329,18 +417,18 @@ function fillBox(placeDetail) {
   }
   const link = placeDetail.result.url;
 
-  const param = {
-    key: gKey,
-    photoreference: photoRef,
-    maxheight: 256,
-  };
+  // const param = {
+  //   key: gKey,
+  //   photoreference: photoRef,
+  //   maxheight: 256,
+  // };
 
-  if (photoRef) {
-    const url = `${imgBaseUrl}?${dictToURI(param)}`;
-    img.src = url;
-    img.alt = `${placeDetail.result.name}`;
-  }
-  toData(name, addr, phone, websiteFull);
+  // if (photoRef) {
+  //   const url = `${imgBaseUrl}?${dictToURI(param)}`;
+  //   img.src = url;
+  //   img.alt = `${placeDetail.result.name}`;
+  // }
+  toData(name, addr, phone, websiteFull, rating);
 
   let mediaContent = document.createElement('div');
   mediaContent.className = 'media-content';
@@ -349,13 +437,13 @@ function fillBox(placeDetail) {
   let p = document.createElement('p');
   p.innerHTML = `<strong>${name}</strong><br>${addr}<br>${phone}<br>${website}`;
 
-  if (photoRef) {
-    appendElements(mediaLeft, figure, img);
-  }
-  const nav = createBoxNav(link, websiteFull);
+  // if (photoRef) {
+  //   appendElements(mediaLeft, figure, img);
+  // }
+  const nav = createBoxNav(link, websiteFull, rating);
   appendElements(mediaContent, content, p);
   mediaContent.appendChild(nav);
-  article.appendChild(mediaLeft);
+  article.appendChild(innerDiv);
   article.appendChild(mediaContent);
   box.appendChild(article);
   return box;
@@ -381,7 +469,7 @@ function removeAllChildNodes(parent) {
   }
 }
 
-function createBoxNav(link, url) {
+function createBoxNav(link, url, rating) {
   const nav = document.createElement('nav');
   nav.className = 'level is-mobile';
   const levelLeft = document.createElement('div');
@@ -424,6 +512,8 @@ function createBoxNav(link, url) {
   appendElements(levelItemMap, iconMap, iMap);
   levelLeft.appendChild(levelItemMap);
   nav.appendChild(levelLeft);
+  const levelRight = generateStarRating(rating);
+  nav.appendChild(levelRight);
   return nav;
 }
 
@@ -434,12 +524,13 @@ function trimURL(url) {
   }
   return url;
 }
-function toData(name, address, phone, website) {
+function toData(name, address, phone, website, rating) {
   let dict = {
     Name: name,
     Address: address,
     Phone: phone,
     Website: website,
+    Rating: rating,
   };
   data.push(dict);
   console.log(data);
@@ -484,6 +575,10 @@ document.addEventListener('click', function (event) {
     if (!event.target.hasAttribute('disabled')) {
       pageNavController(event.target);
     }
+  }
+
+  if (event.target.tagName === 'BUTTON' && event.target.id === 'noticls') {
+    closeWarningNoti();
   }
 });
 /* Credit:
@@ -564,4 +659,55 @@ function pageNavController(t) {
     pagePrev.removeAttribute('disabled');
     pageNext.setAttribute('disabled', true);
   }
+}
+
+function generateStarRating(rating) {
+  const levelRight = document.createElement('div');
+  levelRight.classList.add('level-right');
+  const levelItemStar = document.createElement('div');
+  let r = parseFloat(rating);
+  var i;
+  for (i = 0; i < 5; i++) {
+    let el = document.createElement('span');
+    el.className = 'icon has-text-warning';
+    if (r >= 1) {
+      el.innerHTML = '<i class="fas fa-star"></i>';
+    } else if (r > 0 && r < 1) {
+      el.innerHTML = '<i class="fas fa-star-half-alt"></i>';
+    } else {
+      el.innerHTML = '<i class="far fa-star"></i>';
+    }
+    r = r - 1;
+    levelItemStar.appendChild(el);
+  }
+
+  levelRight.appendChild(levelItemStar);
+  return levelRight;
+}
+
+function updateCache(r) {
+  store.set('lastUpdateDate', date.getDate());
+  var n = store.get('dailySearched');
+  store.set('dailySearched', n + r);
+  console.log(`So far you've searched ${store.get('dailySearched')} results`);
+}
+
+console.log(store.get('dailySearched'));
+
+function closeWarningNoti() {
+  noti.animate(
+    [
+      // keyframes
+      { opacity: 1 },
+      { opacity: 0 },
+    ],
+    {
+      // timing options
+      duration: 500,
+      easing: 'ease',
+    }
+  );
+  setTimeout(() => {
+    noti.classList.add('is-hidden');
+  }, 450);
 }
