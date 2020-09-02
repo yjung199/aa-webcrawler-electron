@@ -1,7 +1,7 @@
 {
   "name": "aa-webcrawler",
   "productName": "Places Scraper",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Business information scraper using Google Places.",
   "main": "src/index.js",
   "scripts": {

@@ -8,6 +8,7 @@
 // Connection check - done
 // Remove pictures - done
 // Limit daily search count to 300 - done
+// Reduced detail search - done
 
 const { ipcRenderer, shell, remote, dialog } = require('electron');
 const Store = require('electron-store');
@@ -19,7 +20,7 @@ const { stringify } = require('querystring');
 const title = document.getElementById('title');
 const results = document.getElementById('results');
 const icon = document.getElementById('save');
-let dailyLimit = 5;
+let dailyLimit = 10;
 
 title.innerText = titleHour(hour);
 const schema = {
@@ -162,7 +163,8 @@ function initializeSearch() {
           for (detail of page) {
             const name = basics[i].name;
             const rating = basics[i].rating;
-            div.appendChild(fillBox(name, rating, detail));
+            const addr = basics[i].addr;
+            div.appendChild(fillBox(name, rating, addr, detail));
             i = i + 1;
           }
           pagination.push(div);
@@ -199,7 +201,6 @@ function initializeSearch() {
 searchBar.addEventListener('keyup', (event) => {
   if (event.key === 'Enter' && online) {
     if (searchBar.value) {
-      closeWarningNoti();
       initializeSearch();
     } else {
       searchBar.classList.add('is-danger');
@@ -265,7 +266,6 @@ searchBtn.addEventListener('click', (event) => {
   console.log('hello');
   if (online) {
     if (searchBar.value) {
-      closeWarningNoti();
       initializeSearch();
     } else {
       searchBar.classList.add('is-danger');
@@ -302,7 +302,7 @@ async function searchLoop() {
           console.log('key doesnt exist');
         }
         for (p of data.results) {
-          basics.push({ name: p.name, rating: p.rating });
+          basics.push({ name: p.name, rating: p.rating, addr: p.formatted_address });
           const placeDetail = searchDetail(p.place_id);
           list2.push(placeDetail);
         }
@@ -347,7 +347,7 @@ async function searchDetail(placeId) {
   const param = {
     key: gKey,
     place_id: placeId,
-    fields: 'formatted_address,formatted_phone_number,website,url',
+    fields: 'formatted_phone_number,website,url',
   };
   const url = `${detailBaseUrl}?${dictToURI(param)}`;
   console.log(url);
@@ -391,7 +391,7 @@ async function boxLoop(target, placeDetails) {
     fillBox(target, d);
   }
 }
-function fillBox(placeName, rating, placeDetail) {
+function fillBox(placeName, rating, placeAddr, placeDetail) {
   let box = document.createElement('div');
   box.className = 'box';
   let article = document.createElement('article');
@@ -407,7 +407,7 @@ function fillBox(placeName, rating, placeDetail) {
   //   photoRef = placeDetail.result.photos[0].photo_reference;
   // }
   const name = placeName;
-  const addr = placeDetail.result.formatted_address;
+  const addr = placeAddr;
   const phone = placeDetail.result.formatted_phone_number;
   let websiteFull = '';
   let website = '';
@@ -689,7 +689,9 @@ function updateCache(r) {
   store.set('lastUpdateDate', date.getDate());
   var n = store.get('dailySearched');
   store.set('dailySearched', n + r);
-  console.log(`So far you've searched ${store.get('dailySearched')} results`);
+  console.log(`So far, you've searched ${store.get('dailySearched')} results`);
+  notiCtr.innerHTML = `<em>So far, you\'ve searched 
+  ${store.get('dailySearched')} place(s) today.</em>`;
 }
 
 console.log(store.get('dailySearched'));

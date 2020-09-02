@@ -90,3 +90,6 @@ out/
 
 # Test Files
 *.csv
+
+# Dummy Folder
+dummy/
