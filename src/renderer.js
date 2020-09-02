@@ -7,7 +7,7 @@
 // Link in Google Map - done
 // Connection check - done
 // Remove pictures - done
-// Limit daily search count to 300 - done
+// Limit daily search count to 250 - done
 // Reduced detail search - done
 
 const { ipcRenderer, shell, remote, dialog } = require('electron');
@@ -20,7 +20,7 @@ const { stringify } = require('querystring');
 const title = document.getElementById('title');
 const results = document.getElementById('results');
 const icon = document.getElementById('save');
-let dailyLimit = 300;
+let dailyLimit = 250;
 
 title.innerText = titleHour(hour);
 const schema = {
