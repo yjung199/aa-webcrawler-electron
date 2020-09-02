@@ -2,14 +2,12 @@ const { app, BrowserWindow, nativeTheme, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
 
-// process.env.NODE_ENV = 'production';
-
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   // eslint-disable-line global-require
   app.quit();
 }
-let debug = true;
+let debug = false;
 let mainWindow;
 const createWindow = () => {
   // Create the browser window.
@@ -34,11 +32,13 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow, async () => {
-  // Register a 'Control+Shift+I' shortcut listener.
-  // globalShortcut.register('Control+Shift+I', () => {
-  //   //this will get call for Control+Shift+I.
-  //   return;
-  // });
+  if (!debug) {
+    // Register a 'Control+Shift+I' shortcut listener.
+    globalShortcut.register('Control+Shift+I', () => {
+      //this will get call for Control+Shift+I.
+      return;
+    });
+  }
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

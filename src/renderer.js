@@ -20,7 +20,7 @@ const { stringify } = require('querystring');
 const title = document.getElementById('title');
 const results = document.getElementById('results');
 const icon = document.getElementById('save');
-let dailyLimit = 10;
+let dailyLimit = 300;
 
 title.innerText = titleHour(hour);
 const schema = {
