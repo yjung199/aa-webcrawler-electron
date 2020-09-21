@@ -148,6 +148,7 @@ function initializeSearch() {
   searchLoop()
     .then((list) => {
       Promise.all(list).then((values) => {
+        var i = 0;
         const pages = chunk(values, 10);
         for (page of pages) {
           // let boxes = [];
@@ -159,7 +160,7 @@ function initializeSearch() {
           //   div.appendChild(b);
           // }
           const div = document.createElement('div');
-          var i = 0;
+
           for (detail of page) {
             const name = basics[i].name;
             const rating = basics[i].rating;
